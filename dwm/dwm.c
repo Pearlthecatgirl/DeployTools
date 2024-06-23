@@ -72,7 +72,6 @@ typedef union {
 	int i;
 	unsigned int ui;
 	float f;
-	float sf;
 	const void *v;
 } Arg;
 
@@ -117,7 +116,6 @@ typedef struct Pertag Pertag;
 struct Monitor {
 	char ltsymbol[16];
 	float mfact;
-	float smfact;
 	int nmaster;
 	int num;
 	int gappx;	      /* gaps between windows */
@@ -224,7 +222,6 @@ static void setfullscreen(Client *c, int fullscreen);
 static void setlayout(const Arg *arg);
 static void setgaps(const Arg *arg);
 static void setmfact(const Arg *arg);
-static void setsmfact(const Arg *arg);
 static void setup(void);
 static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
@@ -720,7 +717,6 @@ createmon(void)
 	m = ecalloc(1, sizeof(Monitor));
 	m->tagset[0] = m->tagset[1] = 1;
 	m->mfact = mfact;
-	m->smfact = smfact;
 	m->nmaster = nmaster;
 	m->showbar = showbar;
 	m->topbar = topbar;
@@ -1699,19 +1695,6 @@ setmfact(const Arg *arg)
 }
 
 void
-setsmfact(const Arg *arg) {
-	float sf;
-
-	if(!arg || !selmon->lt[selmon->sellt]->arrange)
-		return;
-	sf = arg->sf < 1.0 ? arg->sf + selmon->smfact : arg->sf - 1.0;
-	if(sf < 0 || sf > 0.9)
-		return;
-	selmon->smfact = sf;
-	arrange(selmon);
-}
-
-void
 setup(void)
 {
 	int i;
@@ -1885,6 +1868,34 @@ tagmon(const Arg *arg)
 }
 
 void
+tile(Monitor *m)
+{
+	unsigned int i, n, h, mw, my, ty;
+	Client *c;
+
+	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
+	if (n == 0)
+		return;
+
+	if (n > m->nmaster)
+		mw = m->nmaster ? m->ww * m->mfact : 0;
+	else
+		mw = m->ww;
+	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+		if (i < m->nmaster) {
+			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
+			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
+			if (my + HEIGHT(c) < m->wh)
+				my += HEIGHT(c);
+		} else {
+			h = (m->wh - ty) / (n - i);
+			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
+			if (ty + HEIGHT(c) < m->wh)
+				ty += HEIGHT(c);
+		}
+}
+
+void
 tagtoleft(const Arg *arg) {
 	if(selmon->sel != NULL
 	&& __builtin_popcount(selmon->tagset[selmon->seltags] & TAGMASK) == 1
@@ -1906,69 +1917,6 @@ tagtoright(const Arg *arg) {
 	}
 }
 
-void
-tile(Monitor *m)
-{
-	unsigned int i, n, h, smh, r, g = 0, mw, my, ty;
-	//unsigned int i, n, h, smh, mw, my, ty; // This is the original
-	Client *c;
-
-	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
-	if (n == 0)
-		return;
-
-	if (n > m->nmaster) {
-		//mw = m->nmaster ? m->ww * m->mfact : 0; // original
-		mw = m->nmaster ? (m->ww - (g = gappx)) * m->mfact : 0;
-		mw = m->nmaster ? (m->ww - (g = gappx)) * m->smfact : 0; // for smfact, testing rn
-	} else
-		mw = m->ww;
-	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
-		if (i < m->nmaster) {
-			
-			//h = (m->wh - my) / (MIN(n, m->nmaster) - i); // original
-			r = MIN(n, m->nmaster) - i;
-			h = (m->wh - my - gappx * (r - 1)) / r;
-
-			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
-			if (my + HEIGHT(c) < m->wh)
-
-				//my += HEIGHT(c); // original
-				my += HEIGHT(c) + gappx;
-
-		} else {
-			smh = m->mh * m->smfact;
-			if(!(nexttiled(c->next)))
-				h = (m->wh - ty) / (n - i);
-			else
-				h = (m->wh - smh - ty) / (n - i);
-			if(h < minwsz) {
-				c->isfloating = True;
-				XRaiseWindow(dpy, c->win);
-				resize(c, m->mx + (m->mw / 2 - WIDTH(c) / 2), m->my + (m->mh / 2 - HEIGHT(c) / 2), m->ww - mw - (2*c->bw), h - (2*c->bw), False);
-				ty -= HEIGHT(c);
-			}
-			else {
-				r = n - i;
-				h = (m->wh - ty - gappx * (r - 1)) / r;
-				// resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), False); original
-				resize(c, m->wx + mw + g, m->wy + ty, m->ww - mw - g - (2*c->bw), h - (2*c->bw), False);
-			} if(!(nexttiled(c->next))) {
-				ty += HEIGHT(c) + smh + gappx;
-			}
-			else {
-				ty += HEIGHT(c) + gappx;
-			}
-
-			// There is an if statement in the following block. No idea what it does, but may need to modify if bugs exist. The block of code is the original
-			/*
-			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
-			if (ty + HEIGHT(c) < m->wh)
-				ty += HEIGHT(c);
-			*/
-		}
-}
 
 void
 togglebar(const Arg *arg)
