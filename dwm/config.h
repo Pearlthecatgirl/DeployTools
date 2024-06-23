@@ -83,7 +83,9 @@ ResourcePref resources[] = {
 		{ "nmaster",          	INTEGER, &nmaster },
 		{ "resizehints",       	INTEGER, &resizehints },
 		{ "lockfullscreen",     INTEGER, &lockfullscreen },
+		{ "gappx",				INTEGER, &gappx },
 		{ "mfact",      	 	FLOAT,   &mfact },
+		{ "smfact",      	 	FLOAT,   &smfact },
 };
 
 static const Key keys[] = {
@@ -101,8 +103,8 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
 	{ MODKEY,                       XK_plus,   setgaps,        {.i = +1 } },
-	{ MODKEY,                       XK_minus,  setgaps,        {.i = -1 } },
-	{ MODKEY,                       XK_equal,  setgaps,        {.i = 0 } },
+	{ MODKEY,                       XK_minus,   setgaps,       {.i = -1 } },
+	{ MODKEY,                       XK_equals,   setgaps,      {.i = 0 } },
 	{ MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
 	{ MODKEY,                       XK_m,      setlayout,      {.v = &layouts[2]} },
