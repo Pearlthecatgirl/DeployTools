@@ -1,0 +1,5 @@
+# Removes all binary files (.o)
+*.o
+
+# Removes all personal/device specific configs such as colour schemes, keybinds
+*config.h
