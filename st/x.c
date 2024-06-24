@@ -35,6 +35,7 @@ typedef struct {
 	void (*func)(const Arg *);
 	const Arg arg;
 	uint  release;
+	int  altscrn;  /* 0: don't care, -1: not alt screen, 1: alt screen */
 } MouseShortcut;
 
 typedef struct {
@@ -469,6 +470,7 @@ mouseaction(XEvent *e, uint release)
 	for (ms = mshortcuts; ms < mshortcuts + LEN(mshortcuts); ms++) {
 		if (ms->release == release &&
 		    ms->button == e->xbutton.button &&
+		    (!ms->altscrn || (ms->altscrn == (tisaltscr() ? 1 : -1))) &&
 		    (match(ms->mod, state) ||  /* exact or forced */
 		     match(ms->mod, state & ~forcemousemod))) {
 			ms->func(&(ms->arg));
@@ -1867,6 +1869,12 @@ kpress(XEvent *ev)
 			return;
 	} else {
 		len = XLookupString(e, buf, sizeof buf, &ksym, NULL);
+	if ( IS_SET(MODE_KBDSELECT) ) {
+		if ( match(XK_NO_MOD, e->state) ||
+		     (XK_Shift_L | XK_Shift_R) & e->state )
+			win.mode ^= trt_kbdselect(ksym, buf, len);
+		return;
+		}
 	}
 	/* 1. shortcuts */
 	for (bp = shortcuts; bp < shortcuts + LEN(shortcuts); bp++) {
@@ -2096,6 +2104,14 @@ usage(void)
 	    " [-n name] [-o file]\n"
 	    "          [-T title] [-t title] [-w windowid] -l line"
 	    " [stty_args ...]\n", argv0, argv0);
+}
+
+void toggle_winmode(int flag) {
+	win.mode ^= flag;
+}
+
+void keyboard_select(const Arg *dummy) {
+	win.mode ^= trt_kbdselect(-1, NULL, 0);
 }
 
 int

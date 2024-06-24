@@ -87,6 +87,7 @@ void sendbreak(const Arg *);
 void toggleprinter(const Arg *);
 
 int tattrset(int);
+int tisaltscr(void);
 void tnew(int, int);
 void tresize(int, int);
 void tsetdirtattr(int);
@@ -110,6 +111,7 @@ size_t utf8encode(Rune, char *);
 void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *);
+int  trt_kbdselect(KeySym, char *, int);
 
 /* config.h globals */
 extern char *utmp;
