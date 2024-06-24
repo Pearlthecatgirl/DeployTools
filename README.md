@@ -5,3 +5,4 @@ Includes the following:
   1. DWM (Suckless dynamic window manager)
   2. ST (Suckless terminal)
   3. SURF (Suckless web browser)
+  4. DMENU (Tool for user input, used in conjunction with DWM as an application launcher, as well as being used with scripts)
