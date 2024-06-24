@@ -4,3 +4,4 @@ Tools for deploying to a brand new system (tested on main system, archlinux). Th
 Includes the following:
   1. DWM (Suckless dynamic window manager)
   2. ST (Suckless terminal)
+  3. SURF (Suckless web browser)
